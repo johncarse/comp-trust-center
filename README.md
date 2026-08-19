@@ -1,106 +1,70 @@
-# Kodus Trust Center · Dead-simple Trust Hub
+# comp-trust-center
 
-Kodus’ trust center is a self-hosted, YAML-driven builder. Paste your security program into a single YAML document and instantly expose a polished trust portal with compliance badges, document requests, subprocessors, FAQs, and more—no paid SaaS, no vendor lock-in.
+A self-hosted **trust center for [Comp AI](https://github.com/trycompai/comp)** — the
+public-facing trust portal that the upstream project does not ship.
 
-## Why this project?
+## Why this exists
 
-- **Own your data**: Everything lives in your repo/Supabase project. Deploy anywhere.
-- **YAML in, trust center out**: The public site and admin builder render directly from one source of truth.
-- **Fast to operate**: Sales and security teams can edit the YAML, save, and immediately refresh the public page.
-- **Real document requests**: Visitors request sensitive documents via email + admin review.
-- **Lego layout**: Sections can be hidden or set to `half` / `full` width for flexible compositions.
+Comp AI is AGPL-licensed and self-hostable, and it contains almost all of a trust
+portal already: access requests, NDA signing and countersigning, time-limited token
+grants, per-document and bulk downloads, approve/deny/revoke workflows, framework
+badges, and document management. All of it is reachable over its public API at
+`/v1/trust-access/*`, which is genuinely unauthenticated for the visitor-facing routes.
 
-## Features
+What upstream keeps proprietary is the **renderer** — the page a customer's security
+reviewer actually looks at. It lives in their hosted `trust.inc` SaaS. In a self-hosted
+install:
 
-| Capability | Details |
-| --- | --- |
-| YAML builder + live preview | Admin area with copy/reset, Supabase-backed persistence, hide preview toggle. |
-| Public trust center | Theming (`light`/`dark`), company logo, hero commitments, metrics, compliance cards, policies, documents, infra, monitoring, updates, FAQs accordion, subprocessors, contacts. |
-| Document requests | Modal collects work email/context → stored via Supabase (`document_requests` table). |
-| Admin dashboard | Tabs for requests + YAML editor, GitHub SSO (NextAuth). |
-| API endpoints | `/api/requests` (list/create) + `/api/trust-config` (load/save YAML). |
+- the "your portal is live at `trust.inc/<slug>`" link in the admin UI is a hardcoded
+  string pointing at their SaaS, which has never heard of your organization;
+- the custom-domain feature is an API client for **Vercel** — it attaches your domain to
+  *their* Vercel project, so it cannot work for anyone else;
+- `Trust.status = 'published'` is a flag in your database with no reader.
 
-## Tech Stack
+This project is that missing reader. Point it at your own Comp instance and serve it on
+your own domain.
 
-- **Next.js 16 / App Router** + TypeScript
-- **Supabase** for storing requests + YAML config
-- **Shadcn/ui + Tailwind CSS v4** for styling
-- **NextAuth (GitHub provider)** for admin access
-- **Zod + js-yaml** for schema validation
+## Status
 
-## Quick Start
+**Scaffolding.** The tree is currently a verbatim import of
+[kodustech/trust-center](https://github.com/kodustech/trust-center) (MIT), which provides
+an excellent public trust page. The adaptation — replacing its YAML + Supabase content
+layer with reads against a Comp AI instance, and adding Host-based multi-tenancy — is
+described in [`docs/ADAPTATION.md`](docs/ADAPTATION.md) and is in progress.
 
-> Prereqs: Node 18+, npm. Optional: Supabase project + GitHub OAuth app.
+Not yet usable as-is against Comp. Watch the issues.
 
-```bash
-npm install
-cp .env.example .env          # fill in NEXTAUTH_*, GITHUB_*, SUPABASE_* env vars
-npm run dev
+## Design
+
+```
+  visitor
+    │
+    ▼
+comp-trust-center  ──── GET  /v1/trust-portal/public/{friendlyUrl}   (portal content)
+ (this project)    ──── POST /v1/trust-access/{friendlyUrl}/requests (access request)
+                   ──── GET  /v1/trust-access/access/{token}/...     (granted downloads)
+    │
+    ▼
+your Comp AI instance (source of truth: policies, badges, grants, NDAs)
 ```
 
-Create the Supabase tables (SQL):
+The portal is a **renderer with no database of its own**. Content is whatever your Comp
+instance says it is, so the page cannot drift from your actual compliance state — the
+failure mode of every hand-maintained trust page.
 
-```sql
-create table public.document_requests (
-  id text primary key,
-  email text not null,
-  document text not null,
-  company text not null,
-  message text,
-  status text not null default 'pending',
-  created_at timestamptz not null default now()
-);
+One deployment serves multiple tenants: the organization is resolved from the request's
+`Host` header, so `trust.example.com` and `trust.othercorp.com` can be the same pod
+backed by two organizations in one Comp install.
 
-create table public.trust_configs (
-  id text primary key,
-  yaml text not null,
-  updated_at timestamptz not null default now()
-);
-```
+## Licensing
 
-Seed `trust_configs` with `id='default'` (or just save via the admin UI).
+MIT. Derived from [kodustech/trust-center](https://github.com/kodustech/trust-center)
+(MIT, © 2025 Kodus) — their copyright is preserved in `LICENSE` and their component work
+is the basis of the public page.
 
-## YAML Schema Overview
+This project talks to Comp AI over HTTP and contains **no** Comp AI code, so it is not a
+derivative work of that AGPL codebase and carries no AGPL obligations. If you modify Comp
+AI itself, the AGPL applies to those changes, not to this.
 
-Everything lives under a single document. The schema (in `docs/trust-center-schema.md`) includes:
-
-- `theme`: `"light"` or `"dark"`
-- `layout`: map of section → `"full"` / `"half"`
-- `company`, `hero`, `metrics`, `compliance`, `documents`, `policies`
-- `infrastructure`, `monitoring`, `updates`, `faqs`
-- `subprocessors` (with optional `subprocessorsLink`)
-- `contacts`
-
-Delete a section to hide its block entirely. Example snippet:
-
-```yaml
-theme: dark
-layout:
-  compliance: half
-  policies: half
-  documents: full
-subprocessors:
-  - name: AWS
-    category: IT infrastructure
-    location: United States
-    logo: https://.../aws.svg
-    description: Primary cloud provider.
-```
-
-## Deployment
-
-1. Push this repo to your Git provider.
-2. Deploy to Vercel, Fly, Render, or any Next.js-compatible host.
-3. Configure env vars on the platform (NEXTAUTH_URL, SUPABASE_URL, keys, etc.).
-4. Ensure Supabase tables exist and row-level security allows your service-role key.
-
-## Roadmap / Ideas
-
-- Webhook integrations (Slack/email) for new document requests.
-- Versioned YAML history + diff view.
-- Multiple trust centers / multi-tenant mode.
-- Automated compliance evidence importers.
-
-## License
-
-MIT. Build your trust center, own the infra, and share the YAML freely. Contributions welcome!
+Comp AI is a trademark of Comp AI, Inc. This project is not affiliated with or endorsed by
+Comp AI, Inc. or Kodus.
