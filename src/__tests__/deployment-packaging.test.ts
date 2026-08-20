@@ -35,11 +35,14 @@ describe("Dockerfile", () => {
     expect(content).toMatch(/USER (?!root)\S+/);
   });
 
-  it("exposes port 3000 and defines a healthcheck against /", () => {
+  it("exposes port 3000 and health-checks a tenant-independent endpoint", () => {
     const content = dockerfile();
     expect(content).toMatch(/EXPOSE 3000/);
     expect(content).toMatch(/HEALTHCHECK/);
-    expect(content).toMatch(/localhost:3000\//);
+    expect(content).toMatch(/localhost:3000\/api\/health/);
+    // Probing "/" cannot pass: the probe's Host is localhost, which maps to no
+    // tenant, so "/" 404s and the container is unhealthy forever.
+    expect(content).not.toMatch(/localhost:3000\/\s*\|\|/);
   });
 
   it("never bakes COMP_API_URL or TRUST_TENANTS as build-time ARG/ENV or NEXT_PUBLIC_ vars", () => {
