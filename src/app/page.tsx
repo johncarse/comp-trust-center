@@ -3,7 +3,7 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { TrustCenterPublic } from "@/components/trust/trust-center-public";
-import { getPublicTrustPortal } from "@/lib/comp";
+import { getBrowserCompApiUrl, getPublicTrustPortal } from "@/lib/comp";
 import { resolveTenant } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Home() {
   const { portal, friendlyUrl } = await loadPortal();
-  const compApiUrl = process.env.NEXT_PUBLIC_COMP_API_URL ?? "";
+  const compApiUrl = getBrowserCompApiUrl();
 
   return (
     <main className="min-h-screen bg-slate-100/70 px-4 py-10 text-slate-900 transition-colors">

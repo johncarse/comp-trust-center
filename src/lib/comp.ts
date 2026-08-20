@@ -43,6 +43,24 @@ export async function getPublicTrustPortal(
   return (await response.json()) as PublicTrustPortalResponse;
 }
 
+/**
+ * Base URL the BROWSER uses to reach Comp, read at request time.
+ *
+ * Deliberately NOT a NEXT_PUBLIC_ variable: Next inlines those at build time,
+ * which would freeze one deployment's API URL into the image and make the
+ * same image unusable for another tenant or environment. This is read
+ * server-side in a force-dynamic route and handed to the client component as
+ * a prop, so a plain runtime variable reaches the browser just as well while
+ * staying configurable per deployment.
+ */
+export function getBrowserCompApiUrl(): string {
+  const url = process.env.COMP_PUBLIC_API_URL;
+  if (!url) {
+    throw new Error("COMP_PUBLIC_API_URL is not configured");
+  }
+  return url.replace(/\/+$/, "");
+}
+
 /** Builds the visitor-facing access-request endpoint URL for a tenant. */
 export function getTrustAccessRequestUrl(
   compApiBaseUrl: string,
