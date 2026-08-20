@@ -8,7 +8,7 @@ export interface PublicTrustPortalResponse {
   generatedAt: string;
 }
 
-function getCompApiUrl(): string {
+export function getCompApiUrl(): string {
   const url = process.env.COMP_API_URL;
   if (!url) {
     throw new Error("COMP_API_URL is not configured");
