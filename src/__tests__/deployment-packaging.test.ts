@@ -39,10 +39,16 @@ describe("Dockerfile", () => {
     const content = dockerfile();
     expect(content).toMatch(/EXPOSE 3000/);
     expect(content).toMatch(/HEALTHCHECK/);
-    expect(content).toMatch(/localhost:3000\/api\/health/);
-    // Probing "/" cannot pass: the probe's Host is localhost, which maps to no
-    // tenant, so "/" 404s and the container is unhealthy forever.
-    expect(content).not.toMatch(/localhost:3000\/\s*\|\|/);
+    expect(content).toMatch(/127\.0\.0\.1:3000\/api\/health/);
+    // Probing "/" cannot pass: that request's Host is the loopback address,
+    // which maps to no tenant, so "/" 404s and the container is unhealthy
+    // forever.
+    expect(content).not.toMatch(/:3000\/\s*\|\|/);
+    // And the probe must not target the NAME "localhost": /etc/hosts maps it
+    // to ::1 as well as 127.0.0.1, BusyBox wget tries ::1 first, and the
+    // Next server binds 0.0.0.0 (IPv4 only), so the probe is refused.
+    // Verified in the built image: localhost exits 1, 127.0.0.1 exits 0.
+    expect(content).not.toMatch(/HEALTHCHECK[\s\S]*localhost:3000/);
   });
 
   it("never bakes COMP_API_URL or TRUST_TENANTS as build-time ARG/ENV or NEXT_PUBLIC_ vars", () => {
