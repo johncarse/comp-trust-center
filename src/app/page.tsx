@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Home() {
   const { portal, friendlyUrl } = await loadPortal();
-  const compApiUrl = process.env.NEXT_PUBLIC_COMP_API_URL ?? "";
+  const compApiUrl = process.env.COMP_API_URL ?? "";
 
   return (
     <main className="min-h-screen bg-slate-100/70 px-4 py-10 text-slate-900 transition-colors">

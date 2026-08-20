@@ -13,6 +13,20 @@ describe("next.config.ts", () => {
   });
 });
 
+describe("runtime configuration", () => {
+  it("reads COMP_API_URL server-side without a NEXT_PUBLIC_ alias, so it stays a runtime value instead of being inlined at build time", () => {
+    const page = readRoot("src/app/page.tsx");
+    expect(page).not.toMatch(/NEXT_PUBLIC_COMP_API_URL/);
+    expect(page).toMatch(/process\.env\.COMP_API_URL/);
+  });
+
+  it(".env.example documents COMP_API_URL and TRUST_TENANTS only as runtime server vars, never as NEXT_PUBLIC_", () => {
+    const envExample = readRoot(".env.example");
+    expect(envExample).not.toMatch(/NEXT_PUBLIC_COMP_API_URL/);
+    expect(envExample).not.toMatch(/NEXT_PUBLIC_TRUST_TENANTS/);
+  });
+});
+
 describe("Dockerfile", () => {
   const dockerfile = () => readRoot("Dockerfile");
 
