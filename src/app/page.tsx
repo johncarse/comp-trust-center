@@ -1,62 +1,52 @@
 import type { Metadata } from "next";
+import { cache } from "react";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { TrustCenterPublic } from "@/components/trust/trust-center-public";
-import { DEFAULT_TRUST_YAML, safeParseTrustCenter } from "@/lib/trust-config";
-import { getStoredTrustConfig } from "@/lib/trust-config-store";
-import { cn } from "@/lib/utils";
+import { getPublicTrustPortal } from "@/lib/comp";
+import { resolveTenant } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-async function loadTrustConfig() {
-  let yaml = DEFAULT_TRUST_YAML;
+const loadPortal = cache(async () => {
+  const headersList = await headers();
+  const host = headersList.get("host");
+  const friendlyUrl = resolveTenant(host, process.env.TRUST_TENANTS);
 
-  try {
-    const stored = await getStoredTrustConfig();
-    if (stored?.yaml) {
-      yaml = stored.yaml;
-    }
-  } catch (error) {
-    console.error("Falling back to default trust center config:", error);
+  if (!friendlyUrl) {
+    notFound();
   }
 
-  const parsed = safeParseTrustCenter(yaml);
-  if (parsed.ok) {
-    return parsed.data;
+  const portal = await getPublicTrustPortal(friendlyUrl);
+
+  if (!portal) {
+    notFound();
   }
 
-  const fallbackParsed = safeParseTrustCenter(DEFAULT_TRUST_YAML);
-  if (!fallbackParsed.ok) {
-    throw new Error(
-      `Failed to load trust center configuration: ${parsed.error}`
-    );
-  }
-
-  return fallbackParsed.data;
-}
+  return { portal, friendlyUrl };
+});
 
 export async function generateMetadata(): Promise<Metadata> {
-  const config = await loadTrustConfig();
+  const { portal } = await loadPortal();
   return {
-    title: `${config.company.name} | Trust Center`,
-    description: config.company.description,
+    title: `${portal.organization.name} | Trust Center`,
+    icons: portal.branding.faviconUrl
+      ? { icon: portal.branding.faviconUrl }
+      : undefined,
   };
 }
 
 export default async function Home() {
-  const config = await loadTrustConfig();
-  const isDark = config.theme === "dark";
+  const { portal, friendlyUrl } = await loadPortal();
+  const compApiUrl = process.env.NEXT_PUBLIC_COMP_API_URL ?? "";
 
   return (
-    <div className={cn(isDark && "dark")}>
-      <main
-        className={cn(
-          "min-h-screen px-4 py-10 transition-colors",
-          isDark
-            ? "bg-slate-950 text-slate-50"
-            : "bg-slate-100/70 text-slate-900"
-        )}
-      >
-        <TrustCenterPublic config={config} />
-      </main>
-    </div>
+    <main className="min-h-screen bg-slate-100/70 px-4 py-10 text-slate-900 transition-colors">
+      <TrustCenterPublic
+        portal={portal}
+        friendlyUrl={friendlyUrl}
+        compApiUrl={compApiUrl}
+      />
+    </main>
   );
 }

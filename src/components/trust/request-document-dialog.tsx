@@ -7,19 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { getTrustAccessRequestUrl } from "@/lib/comp";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  documentName: string | null;
-  companyName: string;
+  policyName: string | null;
+  organizationName: string;
+  friendlyUrl: string;
+  compApiUrl: string;
 };
 
 export function RequestDocumentDialog({
   open,
   onOpenChange,
-  documentName,
-  companyName,
+  policyName,
+  organizationName,
+  friendlyUrl,
+  compApiUrl,
 }: Props) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -27,24 +32,27 @@ export function RequestDocumentDialog({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!documentName) {
+    if (!policyName) {
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const response = await fetch("/api/requests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          document: documentName,
-          company: companyName,
-          message: message.trim() || undefined,
-        }),
-      });
+      const response = await fetch(
+        getTrustAccessRequestUrl(compApiUrl, friendlyUrl),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            policyName,
+            organizationName,
+            message: message.trim() || undefined,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
@@ -64,7 +72,7 @@ export function RequestDocumentDialog({
     }
   }
 
-  const disabled = !documentName || email.trim().length === 0 || isSubmitting;
+  const disabled = !policyName || email.trim().length === 0 || isSubmitting;
 
   return (
     <Dialog
@@ -84,9 +92,9 @@ export function RequestDocumentDialog({
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Document
+              Policy
             </Label>
-            <p className="font-medium">{documentName ?? "Select a document"}</p>
+            <p className="font-medium">{policyName ?? "Select a policy"}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Your work email</Label>
@@ -106,7 +114,7 @@ export function RequestDocumentDialog({
             <Textarea
               id="message"
               rows={3}
-              placeholder="Tell us why you need access to this document."
+              placeholder="Tell us why you need access to this policy."
               value={message}
               onChange={(event) => setMessage(event.target.value)}
               maxLength={500}
