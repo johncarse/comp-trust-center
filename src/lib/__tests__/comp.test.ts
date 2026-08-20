@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getPublicTrustPortal, getTrustAccessRequestUrl } from "@/lib/comp";
+import { getPublicTrustPortal, getTrustAccessRequestUrl, getBrowserCompApiUrl } from "@/lib/comp";
 
 const SAMPLE_RESPONSE = {
   organization: { name: "Acme Inc", friendlyUrl: "acme" },
@@ -102,5 +102,32 @@ describe("getTrustAccessRequestUrl", () => {
     expect(getTrustAccessRequestUrl("https://comp.example.com", "weird tenant")).toBe(
       "https://comp.example.com/v1/trust-access/weird%20tenant/requests"
     );
+  });
+});
+
+describe("getBrowserCompApiUrl", () => {
+  const original = process.env.COMP_PUBLIC_API_URL;
+  afterEach(() => {
+    if (original === undefined) delete process.env.COMP_PUBLIC_API_URL;
+    else process.env.COMP_PUBLIC_API_URL = original;
+  });
+
+  it("reads the browser-facing base URL at call time, not module load", () => {
+    process.env.COMP_PUBLIC_API_URL = "https://api.first.example.com";
+    expect(getBrowserCompApiUrl()).toBe("https://api.first.example.com");
+    // A build-time-inlined value could not change within one process; a
+    // runtime read must observe the new value on the very next call.
+    process.env.COMP_PUBLIC_API_URL = "https://api.second.example.com";
+    expect(getBrowserCompApiUrl()).toBe("https://api.second.example.com");
+  });
+
+  it("strips trailing slashes so request URLs never double up", () => {
+    process.env.COMP_PUBLIC_API_URL = "https://api.example.com///";
+    expect(getBrowserCompApiUrl()).toBe("https://api.example.com");
+  });
+
+  it("throws a clear error when COMP_PUBLIC_API_URL is not configured", () => {
+    delete process.env.COMP_PUBLIC_API_URL;
+    expect(() => getBrowserCompApiUrl()).toThrow(/COMP_PUBLIC_API_URL/);
   });
 });
