@@ -214,6 +214,13 @@ export function TrustCenterPublic({
                   >
                     Privacy Policy
                   </a>
+                  {/* Comp models privacyPolicy as a bare URL — unlike custom
+                      links it carries no description field, so this generic
+                      line balances the section. Kept tenant-neutral because
+                      one image serves every tenant. */}
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--tc-muted)]">
+                    How personal data is collected, used, retained and shared.
+                  </p>
                 </li>
               ) : null}
               {customLinks.map((link) => (
