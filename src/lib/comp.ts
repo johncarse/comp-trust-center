@@ -2,7 +2,14 @@ export interface PublicTrustPortalResponse {
   organization: { name: string; friendlyUrl: string };
   branding: { faviconUrl: string | null };
   contact: { email: string | null; privacyPolicyUrl: string | null };
-  frameworks: Array<{ id: string; label: string }>;
+  frameworks: Array<{
+    id: string;
+    label: string;
+    /** started | in_progress | compliant — progress, NOT a certification claim. */
+    status?: string;
+    /** The org's published assertion. Only this may be rendered as certified. */
+    certified?: boolean;
+  }>;
   policies: Array<{ id: string; name: string; updatedAt: string }>;
   access: { restricted: boolean };
   generatedAt: string;
@@ -68,4 +75,49 @@ export function getTrustAccessRequestUrl(
 ): string {
   const baseUrl = compApiBaseUrl.replace(/\/+$/, "");
   return `${baseUrl}/v1/trust-access/${encodeURIComponent(friendlyUrl)}/requests`;
+}
+
+export interface TrustOverview {
+  title: string | null;
+  content: string | null;
+}
+
+export interface TrustVendor {
+  id: string;
+  name: string;
+  description: string | null;
+  website: string | null;
+  logoUrl: string | null;
+  trustPortalUrl?: string | null;
+}
+
+/**
+ * Public per-tenant reads that sit outside the aggregate portal payload.
+ * Each degrades to a null/empty result rather than throwing: a trust page
+ * missing its subprocessor list should still render everything else.
+ */
+async function getPublicSection<T>(
+  friendlyUrl: string,
+  section: string,
+  fallback: T,
+): Promise<T> {
+  try {
+    const response = await fetch(
+      `${getCompApiUrl()}/v1/trust-access/${encodeURIComponent(friendlyUrl)}/${section}`,
+      { cache: "no-store" },
+    );
+    if (!response.ok) return fallback;
+    const body = await response.json();
+    return (body ?? fallback) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export function getTrustOverview(friendlyUrl: string): Promise<TrustOverview | null> {
+  return getPublicSection<TrustOverview | null>(friendlyUrl, "overview", null);
+}
+
+export function getTrustVendors(friendlyUrl: string): Promise<TrustVendor[]> {
+  return getPublicSection<TrustVendor[]>(friendlyUrl, "vendors", []);
 }

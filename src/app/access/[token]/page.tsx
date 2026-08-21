@@ -50,10 +50,14 @@ export async function generateMetadata({
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
+  // UTC on purpose: server-side timestamps must not shift a day for viewers
+  // west of UTC. An access grant that expires 2026-09-19T00:00:00Z should not
+  // read as expiring Sep 18.
   return new Date(value).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 

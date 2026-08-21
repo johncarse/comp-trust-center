@@ -28,7 +28,14 @@ describe("TrustCenterPublic", () => {
     expect(screen.getByText("SOC 2 Type II")).toBeInTheDocument();
     expect(screen.getByText("ISO 27001")).toBeInTheDocument();
     expect(screen.getByText("Access Control Policy")).toBeInTheDocument();
-    expect(screen.getByText(/2026-01-15/)).toBeInTheDocument();
+    // Dates render human-formatted rather than raw ISO (fleet-infra#120).
+    // The label and date are separate text nodes, so match on the element's
+    // combined textContent rather than a single node.
+    expect(
+      screen.getByText(
+        (_, el) => el?.textContent?.trim() === "Updated Jan 15, 2026",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("renders the contact email and privacy policy link", () => {

@@ -3,7 +3,12 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { TrustCenterPublic } from "@/components/trust/trust-center-public";
-import { getBrowserCompApiUrl, getPublicTrustPortal } from "@/lib/comp";
+import {
+  getBrowserCompApiUrl,
+  getPublicTrustPortal,
+  getTrustOverview,
+  getTrustVendors,
+} from "@/lib/comp";
 import { resolveTenant } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +28,14 @@ const loadPortal = cache(async () => {
     notFound();
   }
 
-  return { portal, friendlyUrl };
+  // Fetched in parallel and independently degradable: these sections are
+  // additive, so a failure in one must not take down the page.
+  const [overview, vendors] = await Promise.all([
+    getTrustOverview(friendlyUrl),
+    getTrustVendors(friendlyUrl),
+  ]);
+
+  return { portal, friendlyUrl, overview, vendors };
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,15 +49,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const { portal, friendlyUrl } = await loadPortal();
+  const { portal, friendlyUrl, overview, vendors } = await loadPortal();
   const compApiUrl = getBrowserCompApiUrl();
 
   return (
-    <main className="min-h-screen bg-slate-100/70 px-4 py-10 text-slate-900 transition-colors">
+    <main className="min-h-screen bg-[--tc-bg] px-6 py-16 text-[--tc-ink]">
       <TrustCenterPublic
         portal={portal}
         friendlyUrl={friendlyUrl}
         compApiUrl={compApiUrl}
+        overview={overview}
+        vendors={vendors}
       />
     </main>
   );

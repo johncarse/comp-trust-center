@@ -120,3 +120,53 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Trust center design tokens (fleet-infra#120)
+ *
+ * A trust center is read by a security reviewer deciding whether to trust us,
+ * so the register is a document, not a landing page: flat ground, no card
+ * wash, restraint over decoration, one accent used for state rather than
+ * ornament. The content carries the page.
+ *
+ * Authored here rather than borrowed. Comp AI's own stylesheet is AGPL, and
+ * copying it into this MIT repo would relicense the combined work — and under
+ * AGPL §13 oblige us to offer source to every visitor. These are our values.
+ * ------------------------------------------------------------------------ */
+:root {
+  --tc-bg: #ffffff;
+  --tc-ink: #18181b;
+  --tc-muted: #52525b;
+  --tc-faint: #71717a;
+  --tc-rule: #e4e4e7;
+  --tc-accent: #1e40af;
+  --tc-accent-soft: #eff6ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --tc-bg: #0b0b0d;
+    --tc-ink: #f4f4f5;
+    --tc-muted: #a1a1aa;
+    --tc-faint: #8b8b93;
+    --tc-rule: #26262b;
+    --tc-accent: #93b4fd;
+    --tc-accent-soft: #12172a;
+  }
+}
+
+/* Markdown rendered from Comp's overviewContent. Deliberately narrow: only
+ * the elements the renderer can emit, so nothing here styles arbitrary HTML. */
+.tc-prose > * + * { margin-top: 1rem; }
+.tc-prose h2 {
+  margin-top: 2.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--tc-ink);
+}
+.tc-prose p, .tc-prose li { color: var(--tc-muted); line-height: 1.7; }
+.tc-prose ul { list-style: disc; padding-left: 1.25rem; }
+.tc-prose li + li { margin-top: 0.375rem; }
+.tc-prose strong { color: var(--tc-ink); font-weight: 600; }
+.tc-prose a { color: var(--tc-accent); text-decoration: underline; text-underline-offset: 3px; }
