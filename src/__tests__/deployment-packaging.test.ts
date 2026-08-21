@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -59,6 +59,34 @@ describe("Dockerfile", () => {
     expect(content).not.toMatch(/ENV\s+TRUST_TENANTS/);
     expect(content).not.toMatch(/NEXT_PUBLIC_COMP_API_URL/);
     expect(content).not.toMatch(/NEXT_PUBLIC_TRUST_TENANTS/);
+  });
+});
+
+describe("design tokens", () => {
+  const sources = () => {
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        // Skip tests: only shipped component code emits CSS, and this very
+        // file names the bad form in a comment.
+        if (entry.isDirectory() && entry.name !== "__tests__") walk(full);
+        else if (entry.isFile() && /\.tsx?$/.test(entry.name)) files.push(full);
+      }
+    };
+    walk(path.join(root, "src"));
+    return files;
+  };
+
+  it("never references a css variable without var()", () => {
+    // `text-[--tc-ink]` is invalid in Tailwind v4 and compiles to NOTHING,
+    // so the element silently keeps its inherited colour. That shipped once:
+    // in dark mode the prose colour resolved to near-white while the page
+    // background utility never applied, leaving white text on white.
+    const offenders = sources().filter((f) =>
+      /\[--[a-z-]+\]/.test(readFileSync(f, "utf8")),
+    );
+    expect(offenders).toEqual([]);
   });
 });
 

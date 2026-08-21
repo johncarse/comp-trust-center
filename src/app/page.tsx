@@ -56,7 +56,7 @@ export default async function Home() {
   const compApiUrl = getBrowserCompApiUrl();
 
   return (
-    <main className="min-h-screen bg-[--tc-bg] px-6 py-16 text-[--tc-ink]">
+    <main className="min-h-screen bg-[var(--tc-bg)] px-6 py-16 text-[var(--tc-ink)]">
       <TrustCenterPublic
         portal={portal}
         friendlyUrl={friendlyUrl}

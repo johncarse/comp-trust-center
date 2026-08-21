@@ -48,12 +48,12 @@ function FrameworkBadge({
       : null;
 
   return (
-    <li className="flex items-baseline gap-2 border border-[--tc-rule] px-3 py-2">
-      <span className="text-sm font-medium text-[--tc-ink]">{label}</span>
+    <li className="flex items-baseline gap-2 border border-[var(--tc-rule)] px-3 py-2">
+      <span className="text-sm font-medium text-[var(--tc-ink)]">{label}</span>
       {note ? (
-        <span className="text-xs text-[--tc-faint]">{note}</span>
+        <span className="text-xs text-[var(--tc-faint)]">{note}</span>
       ) : certified ? (
-        <span className="text-xs text-[--tc-accent]">Certified</span>
+        <span className="text-xs text-[var(--tc-accent)]">Certified</span>
       ) : null}
     </li>
   );
@@ -67,8 +67,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-[--tc-rule] pt-10">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-[--tc-faint]">
+    <section className="border-t border-[var(--tc-rule)] pt-10">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--tc-faint)]">
         {title}
       </h2>
       <div className="mt-5">{children}</div>
@@ -97,10 +97,10 @@ export function TrustCenterPublic({
   return (
     <div className="mx-auto max-w-3xl">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight text-[--tc-ink]">
+        <h1 className="text-3xl font-semibold tracking-tight text-[var(--tc-ink)]">
           {portal.organization.name}
         </h1>
-        <p className="mt-2 text-[--tc-muted]">Trust Center</p>
+        <p className="mt-2 text-[var(--tc-muted)]">Trust Center</p>
       </header>
 
       <div className="mt-12 space-y-10">
@@ -127,7 +127,7 @@ export function TrustCenterPublic({
 
         <Section title="Policies">
           {portal.policies.length === 0 ? (
-            <p className="text-sm text-[--tc-muted]">
+            <p className="text-sm text-[var(--tc-muted)]">
               No policies have been published yet. Use the request link below
               and we will respond directly.
             </p>
@@ -136,18 +136,18 @@ export function TrustCenterPublic({
               {portal.policies.map((policy) => (
                 <li
                   key={policy.id}
-                  className="flex items-baseline justify-between gap-6 border-b border-[--tc-rule] py-3 last:border-0"
+                  className="flex items-baseline justify-between gap-6 border-b border-[var(--tc-rule)] py-3 last:border-0"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-[--tc-ink]">{policy.name}</p>
-                    <p className="mt-0.5 text-xs text-[--tc-faint]">
+                    <p className="font-medium text-[var(--tc-ink)]">{policy.name}</p>
+                    <p className="mt-0.5 text-xs text-[var(--tc-faint)]">
                       Updated {formatDate(policy.updatedAt)}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleRequest(policy.name)}
-                    className="shrink-0 text-sm text-[--tc-accent] underline underline-offset-4"
+                    className="shrink-0 text-sm text-[var(--tc-accent)] underline underline-offset-4"
                   >
                     Request
                   </button>
@@ -163,16 +163,16 @@ export function TrustCenterPublic({
               {vendors.map((vendor) => (
                 <li
                   key={vendor.id}
-                  className="border-b border-[--tc-rule] py-3 last:border-0"
+                  className="border-b border-[var(--tc-rule)] py-3 last:border-0"
                 >
                   <div className="flex items-baseline justify-between gap-6">
-                    <p className="font-medium text-[--tc-ink]">{vendor.name}</p>
+                    <p className="font-medium text-[var(--tc-ink)]">{vendor.name}</p>
                     {vendor.trustPortalUrl ? (
                       <a
                         href={vendor.trustPortalUrl}
                         rel="noopener noreferrer nofollow"
                         target="_blank"
-                        className="shrink-0 text-sm text-[--tc-accent] underline underline-offset-4"
+                        className="shrink-0 text-sm text-[var(--tc-accent)] underline underline-offset-4"
                       >
                         Trust page
                       </a>
@@ -181,14 +181,14 @@ export function TrustCenterPublic({
                         href={vendor.website}
                         rel="noopener noreferrer nofollow"
                         target="_blank"
-                        className="shrink-0 text-sm text-[--tc-faint] underline underline-offset-4"
+                        className="shrink-0 text-sm text-[var(--tc-faint)] underline underline-offset-4"
                       >
                         Website
                       </a>
                     ) : null}
                   </div>
                   {vendor.description ? (
-                    <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[--tc-muted]">
+                    <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--tc-muted)]">
                       {vendor.description}
                     </p>
                   ) : null}
@@ -198,24 +198,39 @@ export function TrustCenterPublic({
           </Section>
         ) : null}
 
-        {customLinks.length > 0 ? (
+        {portal.contact.privacyPolicyUrl || customLinks.length > 0 ? (
           <Section title="Documents and policies">
             <ul>
+              {/* The privacy policy is the one legal URL Comp models as a
+                  first-class field; it belongs with the other documents
+                  rather than under Contact, which is a way to reach us. */}
+              {portal.contact.privacyPolicyUrl ? (
+                <li className="border-b border-[var(--tc-rule)] py-3 last:border-0">
+                  <a
+                    href={portal.contact.privacyPolicyUrl}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="font-medium text-[var(--tc-accent)] underline underline-offset-4"
+                  >
+                    Privacy Policy
+                  </a>
+                </li>
+              ) : null}
               {customLinks.map((link) => (
                 <li
                   key={link.id}
-                  className="border-b border-[--tc-rule] py-3 last:border-0"
+                  className="border-b border-[var(--tc-rule)] py-3 last:border-0"
                 >
                   <a
                     href={link.url}
                     rel="noopener noreferrer"
                     target="_blank"
-                    className="font-medium text-[--tc-accent] underline underline-offset-4"
+                    className="font-medium text-[var(--tc-accent)] underline underline-offset-4"
                   >
                     {link.title}
                   </a>
                   {link.description ? (
-                    <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[--tc-muted]">
+                    <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--tc-muted)]">
                       {link.description}
                     </p>
                   ) : null}
@@ -225,54 +240,41 @@ export function TrustCenterPublic({
           </Section>
         ) : null}
 
-        {portal.contact.email || portal.contact.privacyPolicyUrl ? (
+        {portal.contact.email ? (
           <Section title="Contact">
-            {portal.contact.email ? (
-              <p className="text-sm text-[--tc-muted]">
-                Security questions or vulnerability reports:{" "}
-                <a
-                  href={`mailto:${portal.contact.email}`}
-                  className="text-[--tc-accent] underline underline-offset-4"
-                >
-                  {portal.contact.email}
-                </a>
-              </p>
-            ) : null}
-            {portal.contact.privacyPolicyUrl ? (
-              <p className="mt-2 text-sm">
-                <a
-                  href={portal.contact.privacyPolicyUrl}
-                  rel="noopener noreferrer"
-                  className="text-[--tc-accent] underline underline-offset-4"
-                >
-                  Privacy policy
-                </a>
-              </p>
-            ) : null}
+            <p className="text-sm text-[var(--tc-muted)]">
+              Security questions or vulnerability reports:{" "}
+              <a
+                href={`mailto:${portal.contact.email}`}
+                className="text-[var(--tc-accent)] underline underline-offset-4"
+              >
+                {portal.contact.email}
+              </a>
+            </p>
           </Section>
         ) : null}
 
         <Section title="Request documents">
-          <p className="max-w-2xl text-sm leading-relaxed text-[--tc-muted]">
+          <p className="max-w-2xl text-sm leading-relaxed text-[var(--tc-muted)]">
             Policies, reports and certificates are available under NDA. Request
             access and we will respond directly.
           </p>
           {portal.access.restricted ? (
-            <p className="mt-2 max-w-2xl text-sm text-[--tc-faint]">
+            <p className="mt-2 max-w-2xl text-sm text-[var(--tc-faint)]">
               Requests are accepted from company email addresses only.
             </p>
           ) : null}
           <button
             type="button"
             onClick={() => handleRequest("Security documentation")}
-            className="mt-4 border border-[--tc-ink] px-4 py-2 text-sm font-medium text-[--tc-ink] transition-colors hover:bg-[--tc-ink] hover:text-[--tc-bg]"
+            className="mt-4 border border-[var(--tc-ink)] px-4 py-2 text-sm font-medium text-[var(--tc-ink)] transition-colors hover:bg-[var(--tc-ink)] hover:text-[var(--tc-bg)]"
           >
             Request access
           </button>
         </Section>
       </div>
 
-      <footer className="mt-16 border-t border-[--tc-rule] pt-6 text-xs text-[--tc-faint]">
+      <footer className="mt-16 border-t border-[var(--tc-rule)] pt-6 text-xs text-[var(--tc-faint)]">
         Last updated {formatDate(portal.generatedAt)}
       </footer>
 
