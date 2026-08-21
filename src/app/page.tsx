@@ -6,6 +6,7 @@ import { TrustCenterPublic } from "@/components/trust/trust-center-public";
 import {
   getBrowserCompApiUrl,
   getPublicTrustPortal,
+  getTrustCustomLinks,
   getTrustOverview,
   getTrustVendors,
 } from "@/lib/comp";
@@ -30,12 +31,13 @@ const loadPortal = cache(async () => {
 
   // Fetched in parallel and independently degradable: these sections are
   // additive, so a failure in one must not take down the page.
-  const [overview, vendors] = await Promise.all([
+  const [overview, vendors, customLinks] = await Promise.all([
     getTrustOverview(friendlyUrl),
     getTrustVendors(friendlyUrl),
+    getTrustCustomLinks(friendlyUrl),
   ]);
 
-  return { portal, friendlyUrl, overview, vendors };
+  return { portal, friendlyUrl, overview, vendors, customLinks };
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -49,7 +51,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const { portal, friendlyUrl, overview, vendors } = await loadPortal();
+  const { portal, friendlyUrl, overview, vendors, customLinks } =
+    await loadPortal();
   const compApiUrl = getBrowserCompApiUrl();
 
   return (
@@ -60,6 +63,7 @@ export default async function Home() {
         compApiUrl={compApiUrl}
         overview={overview}
         vendors={vendors}
+        customLinks={customLinks}
       />
     </main>
   );

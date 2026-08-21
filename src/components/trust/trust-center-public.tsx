@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { PublicTrustPortalResponse, TrustOverview, TrustVendor } from "@/lib/comp";
+import type {
+  PublicTrustPortalResponse,
+  TrustCustomLink,
+  TrustOverview,
+  TrustVendor,
+} from "@/lib/comp";
 import { Markdown } from "@/lib/markdown";
 import { RequestDocumentDialog } from "./request-document-dialog";
 
@@ -11,6 +16,7 @@ interface Props {
   compApiUrl: string;
   overview?: TrustOverview | null;
   vendors?: TrustVendor[];
+  customLinks?: TrustCustomLink[];
 }
 
 function formatDate(value: string): string {
@@ -76,6 +82,7 @@ export function TrustCenterPublic({
   compApiUrl,
   overview,
   vendors = [],
+  customLinks = [],
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<string | null>(null);
@@ -183,6 +190,33 @@ export function TrustCenterPublic({
                   {vendor.description ? (
                     <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[--tc-muted]">
                       {vendor.description}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        ) : null}
+
+        {customLinks.length > 0 ? (
+          <Section title="Documents and policies">
+            <ul>
+              {customLinks.map((link) => (
+                <li
+                  key={link.id}
+                  className="border-b border-[--tc-rule] py-3 last:border-0"
+                >
+                  <a
+                    href={link.url}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="font-medium text-[--tc-accent] underline underline-offset-4"
+                  >
+                    {link.title}
+                  </a>
+                  {link.description ? (
+                    <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[--tc-muted]">
+                      {link.description}
                     </p>
                   ) : null}
                 </li>

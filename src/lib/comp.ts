@@ -121,3 +121,21 @@ export function getTrustOverview(friendlyUrl: string): Promise<TrustOverview | n
 export function getTrustVendors(friendlyUrl: string): Promise<TrustVendor[]> {
   return getPublicSection<TrustVendor[]>(friendlyUrl, "vendors", []);
 }
+
+export interface TrustCustomLink {
+  id: string;
+  title: string;
+  description: string | null;
+  url: string;
+}
+
+/**
+ * Operator-curated links — Terms of Service, security whitepapers, status
+ * pages. Comp has no dedicated field for these beyond the privacy policy, so
+ * this is where anything else legal or informational belongs.
+ */
+export function getTrustCustomLinks(
+  friendlyUrl: string,
+): Promise<TrustCustomLink[]> {
+  return getPublicSection<TrustCustomLink[]>(friendlyUrl, "custom-links", []);
+}
