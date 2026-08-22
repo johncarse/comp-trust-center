@@ -18,6 +18,18 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
+# Remove the bundled package manager. The runtime only executes
+# `node server.js` against the standalone bundle -- npm and npx are never
+# invoked, but npm vendors its own dependency tree (tar, brace-expansion,
+# ip-address, picomatch, sigstore) which carried all 16 remaining CVEs in the
+# StackRox image scan. Deleting it takes the image to zero and removes a
+# package manager from a public-facing container, which is worth doing on its
+# own merits.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+  /usr/local/bin/npm /usr/local/bin/npx \
+  /usr/local/lib/node_modules/corepack \
+  /usr/local/bin/corepack
+
 COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/public ./public

@@ -51,6 +51,16 @@ describe("Dockerfile", () => {
     expect(content).not.toMatch(/HEALTHCHECK[\s\S]*localhost:3000/);
   });
 
+  it("strips the bundled package manager from the runtime image", () => {
+    // npm is never invoked at runtime -- the entrypoint is `node server.js`
+    // against the standalone bundle -- but it vendors its own dependency tree,
+    // which accounted for all 16 CVEs remaining after the application deps
+    // were patched. Removing it also takes a package manager out of a
+    // public-facing container.
+    const content = dockerfile();
+    expect(content).toMatch(/rm -rf[\s\S]*node_modules\/npm/);
+  });
+
   it("never bakes COMP_API_URL or TRUST_TENANTS as build-time ARG/ENV or NEXT_PUBLIC_ vars", () => {
     const content = dockerfile();
     expect(content).not.toMatch(/ARG\s+COMP_API_URL/);
